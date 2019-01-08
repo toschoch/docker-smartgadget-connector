@@ -1,0 +1,40 @@
+# Pull base image
+FROM resin/rpi-raspbian:jessie as builder
+
+# Install dependencies
+RUN apt-get update && apt-get install -y \
+    python3 \
+    build-essential \
+    libglib2.0-dev \
+    curl \
+    --no-install-recommends && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install dependencies
+ARG PIP_INDEX
+ARG PIP_HOST
+
+COPY requirements.txt .
+RUN curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+RUN python3 get-pip.py
+RUN mkdir /wheels
+RUN pip3 wheel --index-url http://${PIP_HOST}/${PIP_INDEX} \
+              --trusted-host ${PIP_HOST} \
+              --wheel-dir /wheels \
+              -r requirements.txt
+
+FROM resin/rpi-raspbian:jessie
+MAINTAINER Tobias Schoch <tobias.schoch@vtxmail.ch>
+
+
+# Install dependencies
+COPY --from=builder /wheels /wheels
+COPY --from=builder /get-pip.py .
+COPY requirements.txt .
+RUN apt-get update && apt-get install -y python3 && python3 get-pip.py && pip3 install --no-cache-dir --no-index --find-links=/wheels -r requirements.txt
+
+# copy app
+COPY app /app
+WORKDIR /app
+
+CMD ["python", "main.py"]

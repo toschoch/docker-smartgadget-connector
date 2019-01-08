@@ -19,7 +19,7 @@ Installation / Usage
 clone the repo:
 
 ```
-git clone <git-url>
+git clone git@github.com:toschoch/docker-smartgadget-connector.git
 ```
 build the docker image
 ```

@@ -23,13 +23,15 @@ git clone git@github.com:toschoch/docker-smartgadget-connector.git
 ```
 build the docker image
 ```
-docker build . -t docker-smartgadget-connector
+docker --build-arg PIP_HOST=.. --build-arg PIP_INDEX=.. build . -t docker-smartgadget-connector
 ```
 
 Example
 -------
 
-run a container of the image
+The container needs access to the bluetooth devices therefore the special
+capabilites and the host net is required.
+
 ```
-docker run -v ... -p ... docker-smartgadget-connector
+docker run --cap-add=SYS_ADMIN --cap-add=NET_ADMIN --net=host -it shocki/smartgadget-connector
 ```

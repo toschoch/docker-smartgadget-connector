@@ -5,9 +5,10 @@ from apscheduler.executors.pool import ProcessPoolExecutor, ThreadPoolExecutor
 from apscheduler.schedulers.background import BlockingScheduler
 from influxdb import InfluxDBClient
 
-from smartgadgetmqtt.device import SmartGadget
-from smartgadgetmqtt.helper import upload_missing_data_to_db
-from smartgadgetmqtt.scanner import SmartGadgetScanner
+from smartgadget.device import SmartGadget
+from smartgadget.scanner import SmartGadgetScanner
+
+from helper import upload_missing_data_to_db
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s | %(name)s | %(levelname)s | %(message)s')
 

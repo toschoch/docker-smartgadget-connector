@@ -1,0 +1,62 @@
+kind: pipeline
+name: build-amd64
+
+platform:
+  os: linux
+  arch: amd64
+
+steps:
+- name: docker  
+  image: plugins/docker:1
+  settings:
+    repo: shocki/smartgadget-connector
+    auto_tag: true
+    auto_tag_suffix: linux-amd64
+    username: shocki
+    password:
+      from_secret: docker_password
+---
+kind: pipeline
+name: build-arm
+
+platform:
+  os: linux
+  arch: arm
+
+steps:
+- name: docker  
+  image: plugins/docker:linux-arm
+  settings:
+    repo: shocki/smartgadget-connector
+    auto_tag: true
+    auto_tag_suffix: linux-arm
+    username: shocki
+    password:
+      from_secret: docker_password
+
+---
+kind: pipeline
+name: publish-manifest
+
+steps:
+- name: manifest
+  image: plugins/manifest:1
+  settings:
+    username: shocki
+    password:
+      from_secret: docker_password
+    target: shocki/smartgadget-connector:latest
+    template: shocki/smartgadget-connector:OS-ARCH
+    platforms: 
+      - linux/amd64
+      - linux/arm
+    ignore_missing: true
+
+trigger:
+  status:
+    - success
+
+depends_on:
+  - build-arm
+  - build-amd64
+

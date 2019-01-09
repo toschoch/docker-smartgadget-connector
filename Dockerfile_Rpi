@@ -1,5 +1,5 @@
 # Pull base image
-FROM resin/rpi-raspbian:jessie as builder
+FROM raspbian/stretch as builder
 
 # Install dependencies
 RUN apt-get update && apt-get install -y \
@@ -23,7 +23,7 @@ RUN pip3 wheel --index-url http://${PIP_HOST}/${PIP_INDEX} \
               --wheel-dir /wheels \
               -r requirements.txt
 
-FROM resin/rpi-raspbian:jessie
+FROM raspbian/stretch
 MAINTAINER Tobias Schoch <tobias.schoch@vtxmail.ch>
 
 

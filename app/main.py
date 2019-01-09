@@ -21,9 +21,9 @@ if __name__ == '__main__':
 
     class AppendSmartGadget(SmartGadgetScanner):
 
-        def __init__(self, gadgets={}, jobs={}):
-            SmartGadgetScanner.__init__(self, gadgets)
-            self.jobs = jobs
+        def __init__(self):
+            SmartGadgetScanner.__init__(self)
+            self.jobs = {}
 
         def on_appearance(self, dev: SmartGadget):
             logging.info("appearance {}".format(dev))
@@ -98,6 +98,7 @@ if __name__ == '__main__':
 
 
     scanner = AppendSmartGadget()
+    # scanner = SmartGadgetScanner()
 
     scheduler.add_job(scanner.scan, 'interval', minutes=5, args=(10,),
                       start_date=datetime.datetime.now()+datetime.timedelta(seconds=1))

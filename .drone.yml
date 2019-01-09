@@ -16,6 +16,9 @@ steps:
     password:
       from_secret: docker_password
     dockerfile: Dockerfile
+    build_args:
+      - PIP_HOST=devpi.dietzi.mywire.org
+      - PIP_INDEX=dietzi/staging
 ---
 kind: pipeline
 name: build-arm
@@ -35,6 +38,9 @@ steps:
     password:
       from_secret: docker_password
     dockerfile: Dockerfile_Rpi
+    build_args:
+      - PIP_HOST=devpi.dietzi.mywire.org
+      - PIP_INDEX=dietzi/staging
 
 ---
 kind: pipeline

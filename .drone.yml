@@ -7,7 +7,7 @@ platform:
 
 steps:
 - name: docker  
-  image: plugins/docker:latest
+  image: plugins/docker:17.10
   settings:
     repo: shocki/smartgadget-connector
     auto_tag: true

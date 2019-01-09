@@ -15,6 +15,7 @@ steps:
     username: shocki
     password:
       from_secret: docker_password
+    dockerfile: Dockerfile
 ---
 kind: pipeline
 name: build-arm
@@ -33,6 +34,7 @@ steps:
     username: shocki
     password:
       from_secret: docker_password
+    dockerfile: Dockerfile_Rpi
 
 ---
 kind: pipeline

@@ -12,6 +12,20 @@ Application to connect to nearby Sensirion SmartGadgets with BLE, periodically r
 
 Change-Log
 ----------
+##### 1.0.0
+* fix battery data annotation & documentation
+* added battery value push and made influxdb connection configurable
+* removed global dictionary for tasks
+* added glib2.0 to raspbian image
+* fixed drone docker plugin version
+* drone docker plugin update
+* switched to raspian/stretch for updated python3 version
+* added build args
+* added Dockerfiles into build description
+* fixed rpi version of dockerfile
+* added a docker file for raspberry
+* working dockerfile
+
 ##### 0.0.1
 * initial version
 

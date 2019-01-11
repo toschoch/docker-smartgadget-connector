@@ -4,7 +4,7 @@ from influxdb import InfluxDBClient
 log = logging.getLogger(__name__)
 
 
-def upload_missing_data_to_db(client : InfluxDBClient, data, interval, topic, tags, database='telegraf'):
+def upload_missing_data_to_db(client : InfluxDBClient, data, interval, topic, tags, database):
 
     t0 = data[-1][1]
 

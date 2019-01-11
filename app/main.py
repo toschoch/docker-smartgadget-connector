@@ -1,5 +1,7 @@
 import datetime
 import logging
+import os
+import time
 
 from apscheduler.executors.pool import ProcessPoolExecutor, ThreadPoolExecutor
 from apscheduler.schedulers.background import BlockingScheduler
@@ -9,6 +11,15 @@ from smartgadget.device import SmartGadget
 from smartgadget.scanner import SmartGadgetScanner
 
 from helper import upload_missing_data_to_db
+
+
+INFLUXDB = os.environ['INFLUXDB']
+INFLUXDB_PORT = os.environ.get('INFLUXDB_PORT', 8888)
+INFLUXDB_NAME = os.environ.get('INFLUXDB_NAME', 'smartgadgets')
+
+SCAN_INTERVAL = int(os.environ.get('SCAN_INTERVAL', 5))  # minutes
+SCAN_DURATION = 10  # seconds
+DOWNLOAD_INTERVAL = int(os.environ.get('DOWNLOAD_INTERVAL', 4))  # hours
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s | %(name)s | %(levelname)s | %(message)s')
 
@@ -33,7 +44,7 @@ if __name__ == '__main__':
                 job = scheduler.add_job(AppendSmartGadget.download,
                                         'interval',
                                         args=(dev,),
-                                        hours=4,
+                                        hours=DOWNLOAD_INTERVAL,
                                         jitter=300,
                                         coalesce=True,
                                         start_date=datetime.datetime.now() + datetime.timedelta(seconds=1),
@@ -54,93 +65,68 @@ if __name__ == '__main__':
             dev.connect()
 
             logging.info("connect to db...")
-            db = InfluxDBClient('nas', 4286, 'telegraf')
+            db = InfluxDBClient(INFLUXDB, INFLUXDB_PORT, INFLUXDB_NAME)
 
             batt = dev.Battery.read()
             logging.info("{}, Battery: {:02d}%".format(dev, batt))
             data = dev.download_temperature_and_relative_humidity()
 
-            # db.write_points([{
-            #     "measurement": "smartgadgets/{}/{}".format(dev.addr, 'battery'),
-            #     "time": time.time(),
-            #     "fields": {
-            #         "value": batt
-            #     }
-            # }], )
-
-            topic = "smartgadgets/{}/{}".format(dev.addr, 'temperature')
-
             tags = {
                 'manufacturer': 'Sensirion',
-                'quantity': 'temperature',
                 'device': 'smartgadget',
                 'address': dev.addr,
+            }
+
+            _tags = tags.copy()
+            _tags.update({
+                'quantity': 'battery',
                 'unit': dev.Temperature.unit,
                 'description': dev.Temperature.description
-            }
+            })
 
-            upload_missing_data_to_db(db, data[dev.Temperature], dev.Logging.interval, topic, tags)
+            db.write_points([{
+                "measurement": "battery_levels",
+                "time": int(time.time()*1000),
+                "fields": {
+                    "value": batt
+                }
+            }], tags=_tags, time_precision='ms', database=INFLUXDB_NAME)
 
-            topic = "smartgadgets/{}/{}".format(dev.addr, 'humidity')
+            _tags = tags.copy()
+            _tags.update({
+                'quantity': 'temperature',
+                'unit': dev.Temperature.unit,
+                'description': dev.Temperature.description
+            })
 
-            tags = {
-                'manufacturer': 'Sensirion',
+            upload_missing_data_to_db(db,
+                                      data[dev.Temperature],
+                                      dev.Logging.interval,
+                                      "temperatures", _tags, INFLUXDB_NAME)
+
+
+            _tags = tags.copy()
+            _tags.update({
                 'quantity': 'humidity',
-                'device': 'smartgadget',
-                'address': dev.addr,
                 'unit': dev.RelativeHumidity.unit,
                 'description': dev.RelativeHumidity.description
-            }
+            })
 
-            upload_missing_data_to_db(db, data[dev.RelativeHumidity], dev.Logging.interval, topic, tags)
+            upload_missing_data_to_db(db,
+                                      data[dev.RelativeHumidity],
+                                      dev.Logging.interval,
+                                      "humidities", _tags, INFLUXDB_NAME)
 
             dev.disconnect()
 
+    # assure existence of database
+    db = InfluxDBClient(INFLUXDB, INFLUXDB_PORT, INFLUXDB_NAME)
+    db.create_database(INFLUXDB_NAME)
+
 
     scanner = AppendSmartGadget()
-    # scanner = SmartGadgetScanner()
 
-    scheduler.add_job(scanner.scan, 'interval', minutes=5, args=(10,),
+    scheduler.add_job(scanner.scan, 'interval', minutes=SCAN_INTERVAL, args=(SCAN_DURATION,),
                       start_date=datetime.datetime.now()+datetime.timedelta(seconds=1))
 
     scheduler.start()
-
-    # db = InfluxDBClient('nas', 4286, 'telegraf')
-    #
-    # scanner = SmartGadgetScanner()
-    # scanner.scan(3)
-    #
-    # print(scanner.gadgets)
-    # #
-    # g = SmartGadget('e2:07:bc:53:40:61')
-    # g.connect()
-    #
-    # data = g.download_temperature_and_relative_humidity()
-    #
-    # topic = "smartgadgets/{}/{}".format(g.addr, 'temperature')
-    #
-    # tags = {
-    #     'manufacturer': 'Sensirion',
-    #     'quantity': 'temperature',
-    #     'device': 'smartgadget',
-    #     'address': g.addr,
-    #     'unit': g.Temperature.unit,
-    #     'description': g.Temperature.description
-    # }
-    #
-    # upload_missing_data_to_db(db, data[g.Temperature], g.Logging.interval, topic, tags)
-    #
-    # topic = "smartgadgets/{}/{}".format(g.addr, 'humidity')
-    #
-    # tags = {
-    #     'manufacturer': 'Sensirion',
-    #     'quantity': 'humidity',
-    #     'device': 'smartgadget',
-    #     'address': g.addr,
-    #     'unit': g.RelativeHumidity.unit,
-    #     'description': g.RelativeHumidity.description
-    # }
-    #
-    # upload_missing_data_to_db(db, data[g.RelativeHumidity], g.Logging.interval, topic, tags)
-    #
-    # g.disconnect()

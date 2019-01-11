@@ -14,7 +14,7 @@ from helper import upload_missing_data_to_db
 
 
 INFLUXDB = os.environ['INFLUXDB']
-INFLUXDB_PORT = os.environ.get('INFLUXDB_PORT', 8888)
+INFLUXDB_PORT = os.environ.get('INFLUXDB_PORT', 8086)
 INFLUXDB_NAME = os.environ.get('INFLUXDB_NAME', 'smartgadgets')
 
 SCAN_INTERVAL = int(os.environ.get('SCAN_INTERVAL', 5))  # minutes
@@ -47,7 +47,7 @@ if __name__ == '__main__':
                                         hours=DOWNLOAD_INTERVAL,
                                         jitter=300,
                                         coalesce=True,
-                                        start_date=datetime.datetime.now() + datetime.timedelta(seconds=1),
+                                        start_date=datetime.datetime.now() + datetime.timedelta(seconds=5),
                                         executor='process',
                                         misfire_grace_time=120)
                 self.jobs[dev.addr] = job
@@ -80,8 +80,8 @@ if __name__ == '__main__':
             _tags = tags.copy()
             _tags.update({
                 'quantity': 'battery',
-                'unit': dev.Temperature.unit,
-                'description': dev.Temperature.description
+                'unit': dev.Battery.unit,
+                'description': dev.Battery.description
             })
 
             db.write_points([{
